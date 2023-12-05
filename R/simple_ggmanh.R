@@ -63,9 +63,9 @@ simple_ggmanh <- function(
   trans <- list("trans" = "identity", "breaks" = ggplot2::waiver())
   mustdrop = which(is.na(x$data[[x$pval.colname]]))
   if (length(mustdrop)>0)
-      x$data[[x$pval.colname]] = x$data[[x$pval.colname]][-mustdrop]
+      x$data = x$data[-mustdrop,]
   if (requireNamespace("shiny")) {
-  shiny::validate(shiny::need(length(x$data[[x$pval.colname]])>0, "no non-missing p-values, please select additional studies"))
+  shiny::validate(shiny::need(nrow(x$data)>0, "no non-missing p-values, please select additional studies"))
   }
   if (rescale) {
     jump <- ggmanh:::get_transform_jump(-log10(x$signif))
