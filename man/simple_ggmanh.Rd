@@ -63,6 +63,10 @@ simple_ggmanh(
 \description{
 produce plotly-capable manhattanplot based on ggmanh
 }
+\note{
+Association records with missing p-values are eliminated before
+plotting.
+}
 \examples{
 data(fdat)
 dd = ggmanh::manhattan_data_preprocess(fdat, chr.colname="seqnames",

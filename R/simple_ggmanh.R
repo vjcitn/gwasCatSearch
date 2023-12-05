@@ -1,5 +1,7 @@
 
 #' produce plotly-capable manhattanplot based on ggmanh
+#' @import ggmanh
+#' @import rlang
 #' @param x MPdata instance from ggmanh::manhattan_data_preprocess
 #' @param chromosome character(1) or NULL
 #' @param rescale logical(1)
@@ -17,6 +19,8 @@
 #' @param plot.subtitle like plot.title
 #' @param plot.width numeric(1)
 #' @param plot.height numeric(1)
+#' @note Association records with missing p-values are eliminated before
+#' plotting.
 #' @examples
 #' data(fdat)
 #' dd = ggmanh::manhattan_data_preprocess(fdat, chr.colname="seqnames",
@@ -57,9 +61,15 @@ simple_ggmanh <- function(
 
   # create transformation object; if rescaling is required, create appropriate transformation
   trans <- list("trans" = "identity", "breaks" = ggplot2::waiver())
+  mustdrop = which(is.na(x$data[[x$pval.colname]]))
+  if (length(mustdrop)>0)
+      x$data[[x$pval.colname]] = x$data[[x$pval.colname]][-mustdrop]
+  if (requireNamespace("shiny")) {
+  shiny::validate(shiny::need(length(x$data[[x$pval.colname]])>0, "no non-missing p-values, please select additional studies"))
+  }
   if (rescale) {
     jump <- ggmanh:::get_transform_jump(-log10(x$signif))
-    if ((ceiling(max(x$data[[x$pval.colname]])/5)*5)/jump > rescale.ratio.threshold) {
+    if ((ceiling(max(x$data[[x$pval.colname]],na.rm=TRUE)/5)*5)/jump > rescale.ratio.threshold) {
       trans <- ggmanh:::get_transform(x$data, jump, x$pval.colname, jump.rel.pos = signif.rel.pos)
     }
   }

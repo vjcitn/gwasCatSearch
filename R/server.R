@@ -110,7 +110,7 @@ server <- function(input, output, session) {
      dat = grab_resources()
      d4manh = ggmanh::manhattan_data_preprocess(dat, chr.colname="seqnames",
             pos.colname="start", pval.colname="P.VALUE", chr.order=c(1:22, "X", "Y"))
-     simple_ggmanh(d4manh, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
+     gwasCatSearch::simple_ggmanh(d4manh, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
 
 #
 #

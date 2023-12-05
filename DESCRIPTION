@@ -19,7 +19,7 @@ VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
 Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
 	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges, graph,
-	ontologyIndex, dplyr
+	ontologyIndex, dplyr, ggmanh, rlang
 Suggests: knitr, rmarkdown, testthat, gwasrapidd
 Encoding: UTF-8
 LazyData: true
