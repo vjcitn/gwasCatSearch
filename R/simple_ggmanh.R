@@ -2,8 +2,10 @@
 #' produce plotly-capable manhattanplot based on ggmanh
 #' @import ggmanh
 #' @import rlang
-#' @param x MPdata instance from ggmanh::manhattan_data_preprocess
-#' @param chromosome character(1) or NULL
+#' @param indf data.frame as produced by `variants_from_study`
+#' @param pos.colname character(1) defaults to "CHR_POS"
+#' @param chr.colname character(1) defaults to "CHR_ID"
+#' @param chromosome character(1) or NULL, should be removed for gwasCatSearch
 #' @param rescale logical(1)
 #' @param rescale.ratio.threshold numeric(1)
 #' @param signif.rel.pos numeric(1)
@@ -20,34 +22,36 @@
 #' @param plot.width numeric(1)
 #' @param plot.height numeric(1)
 #' @note Association records with missing p-values are eliminated before
-#' plotting.
+#' plotting.  Note also that the position column in `indf` is coerced to numeric mode.
 #' @examples
-#' data(fdat)
-#' dd = ggmanh::manhattan_data_preprocess(fdat, chr.colname="seqnames",
-#'    pos.colname="start", pval.colname="P.VALUE", chr.order=c(1:22, "X", "Y"))
-#' ww = simple_ggmanh(dd, y.label="-log10 p", 
-#'        label.colname = "MAPPED_TRAIT", pval.colname="P.VALUE")
-#' plotly::ggplotly(ww)
+#' con = gwasCatSearch_dbconn()
+#' toprecs = DBI::dbGetQuery(con, "select * from gwascatalog_associations limit 20")
+#' toprecs$CHR_POS = as.numeric(toprecs$CHR_POS)
+#' ww = simple_ggmanh(toprecs, y.label="-log10 p", 
+#'        label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
+#' plotly::ggplotly(ww, tooltip="text")
 #' @export
 simple_ggmanh <- function(
-  x, chromosome = NULL, 
+  indf, pos.colname="CHR_POS", chr.colname = "CHR_ID", chromosome = NULL, 
   rescale = TRUE, 
   rescale.ratio.threshold = 5, signif.rel.pos = 0.4, color.by.highlight = FALSE,
-  label.colname = NULL, pval.colname="P.VALUE", x.label = "Chromosome", y.label = "-log10 p",
+  label.colname = NULL, pval.colname="P-VALUE", x.label = "Chromosome", y.label = "-log10 p",
   point.size = 0.75, label.font.size = 2, max.overlaps = 20,
   plot.title = ggplot2::waiver(), plot.subtitle = ggplot2::waiver(),
-  plot.width = 10, plot.height = 5, ...
-) {
+  plot.width = 10, plot.height = 5) {
 #
 # this code is extracted from ggmanh:::manhattan_plot.MPdata, to support
 # use of ggplotly with the output.  it excludes the ggrepel capability
 # and avoids issue with y.label as expression
 #
+  indf[[pos.colname]] = as.numeric(indf[[pos.colname]])
+  x = ggmanh::manhattan_data_preprocess(indf, chr.colname=chr.colname,
+    pos.colname=pos.colname, pval.colname=pval.colname, chr.order=c(1:22, "X", "Y"))
   stopifnot(is(label.colname, "character"), length(label.colname)==1L,
     label.colname %in% names(x$data))
   if (all(!is.null(label.colname), !is.na(label.colname), na.rm = TRUE)) {
     if (!(label.colname %in% colnames(x$data))) stop("label.colname not a valid column name for the data.")
-    if ((sum(!is.na(x$data[[label.colname]]) & !(x$data[[label.colname]] == ""))) > 20) warning("The plot will generate > 20 labels. The plot may be cluttered & may take a longer to generate.")
+#    if ((sum(!is.na(x$data[[label.colname]]) & !(x$data[[label.colname]] == ""))) > 20) warning("The plot will generate > 20 labels. The plot may be cluttered & may take a longer to generate.")
   }
 
   # if chromosome is specified, subset the data
@@ -98,9 +102,15 @@ simple_ggmanh <- function(
     point.color.map <- x$chr.col
   }
 
-  # manhattan plot without labels
-  p <- ggplot2::ggplot(x$data, ggplot2::aes(x = !!rlang::sym(pos), y = !!rlang::sym(x$pval.colname), color = !!rlang::sym(point.color), 
-      text=!!rlang::sym(label.colname))) +  # label.colname is obligatory
+  # set up hovertext
+  x$data$newtext = sprintf("trait: %s<br>SNP: rs%s<br>gene: %s<br>chr %s:%s",
+          x$data$MAPPED_TRAIT, x$data$SNP_ID_CURRENT,
+            x$data$MAPPED_GENE, x$data$CHR_ID, x$data$CHR_POS)
+
+  # manhattan plot
+  p <- ggplot2::ggplot(x$data, ggplot2::aes(x = !!rlang::sym(pos), y = !!rlang::sym(x$pval.colname), 
+      color = !!rlang::sym(point.color), 
+      text=newtext)) + # !!rlang::sym(label.colname))) +  # label.colname is obligatory
     ggplot2::geom_point(size = point.size, pch = 16) +
     ggplot2::scale_discrete_manual(aesthetics = "color", values = point.color.map) +
     ggplot2::scale_y_continuous(

@@ -1,5 +1,5 @@
 ## define the globals
- globalVariables(c("efo", "efo_df", "efo_oi", "efo_tc", "mlogp"))
+ globalVariables(c("efo", "efo_df", "efo_tc", "mlogp"))
 
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
@@ -159,3 +159,170 @@ getParents = function(Ontonames) {
   ans = dbGetQuery(gwasCatSearch_dbconn(), query)
   return(split(ans$Object, ans$Subject))
 }
+
+#' 
+#' A function to query the uberon_labels table and return the text descriptions for the input Uberon terms
+#' @description
+#' This function provides an interface to the SQL database containing Uberon labels. 
+#' @param UberonIDs a character vector of the ontology CURIE symbols
+#' @details The function selects the appropriate rows from the uberon_labels table.
+#' @return A named vector, names are from the input UberonIDs and the values are the corresponding text descriptions.
+#' @author Robert Gentleman
+#' @examples 
+#' getUberonText(c("UBERON:0001004", "UBERON:0000474"))
+#' @export
+getUberonText = function(UberonIDs) {
+  if (!is.character(UberonIDs) | length(UberonIDs) < 1)
+    stop("incorrect input")
+  query = paste0("SELECT * FROM uberon_labels WHERE Subject IN ('",
+                 paste(UberonIDs, collapse = "','"),
+                 "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  rval=ans$Object
+  names(rval) = ans$Subject
+  notmapped = setdiff(UberonIDs, names(rval))
+  rval[notmapped] = NA
+  return(rval)
+}
+
+##    property     class
+## 1        id character
+## 2      name character
+## 3   parents      list
+## 4  children      list
+## 5 ancestors      list
+## 6  obsolete   logical
+
+##The other way around—in our DB each row represents a child-parent relationship, 
+##where Subject is the child and Object is the parent. Otherwise you are correct, 
+##from efo_edges we get explicit relationships, and from efo_entailed_edges we get 
+##all (explicit+implicit) edges, which allows us to get both ancestors and descendants 
+##of any term.
+
+#' 
+#' A function to query the efo_edges table and return the parent terms for the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO edges (parent child relationships). 
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of parents for the input terms.
+#' @return A named vector, names are from the input EFOIDs and the values are the 
+#' corresponding CURIEs for the parent terms. There can be zero or more matches for each input ID.
+#' @author Robert Gentleman
+#' @examples 
+#' EFOparents(c("EFO:0000768", "MONDO:0002429"))
+#' @export
+EFOparents = function( EFOID) {
+  if (!is.character(EFOID) | length(EFOID) < 1)
+    stop("incorrect input")
+  
+  q1 = paste0("SELECT * from efo_edges where Subject IN ('",
+  paste(EFOID, collapse = "','"),
+  "')")
+ ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+ av = ans$Object
+ names(av) = ans$Subject
+ return(av)
+}
+
+#'
+#'A function to access the ancestors of the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO entailed edges.
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of ancestors for the input terms. The ancestors are all nodes that are parents, or parents of parents and so on, up to the root node of the ontology. These edges are entailed as there are some relationships that can be
+#' inferred that would not be detected by simply recursively finding parents.
+#' @return A named vector, names are from the input EFOIDs and the values are the corresponding CURIEs for the ancestor terms. There can be zero or more matches for each input ID.
+#' @author Robert Gentleman
+#' #' @param EFOID a character vector of the EFO CURIE symbols
+#' @examples 
+#' tancestors = EFOancestors(c("EFO:0000768", "MONDO:0002429"))
+#' table(names(tancestors))
+#' @export
+EFOancestors = function(EFOID) {
+  if (!is.character(EFOID) | length(EFOID) < 1)
+    stop("incorrect input")
+  
+  q1 = paste0("SELECT * from efo_entailed_edges where Subject IN ('",
+              paste(EFOID, collapse = "','"),
+              "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  av = ans$Object
+  names(av) = ans$Subject
+  return(av)
+}
+
+#' 
+#' A function to query the efo_edges table and return the child terms for the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO edges (parent child relationships). 
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of children (more specific) for the input IDs.
+#' @return A named vector, names are from the input EFOIDs and the values are the corresponding CURIEs for the child terms.
+#' @author Robert Gentleman
+#' @examples 
+#' EFOchildren("EFO:0009448")  ##should contain EFO:0000768
+#' EFOchildren(c("EFO:0000768", "MONDO:0002429"))
+#' @export
+EFOchildren = function( EFOID) {
+  if (!is.character(EFOID) | length(EFOID) < 1)
+    stop("incorrect input")
+  
+  q1 = paste0("SELECT * from efo_edges where Object IN ('",
+              paste(EFOID, collapse = "','"),
+              "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  av = ans$Subject
+  names(av) = ans$Object
+  return(av)
+}
+
+#' 
+#' A function to query the efo_edges table and return the descendant terms for the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO entailed edges. 
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of descendents for the input terms.
+#' @return A named vector, names are from the input EFOIDs and the values are the corresponding CURIEs for the 
+#' descendant terms.  These are basically the children, the children of the children and so on.
+#' We use entailed edges so there may be terms in the descendents that have been identified
+#' by logic based on the ontology and may not be detected by the recursive application of EFOchildren.
+#' @author Robert Gentleman
+#' @examples 
+#' ##leukemia
+#' dec1 = EFOdescendants("EFO:0000565")  
+#' table(names(dec1))
+#' dec2 = EFOdescendants(c("EFO:0000768", "MONDO:0002429"))
+#' @export
+EFOdescendants = function( EFOID) {
+  if (!is.character(EFOID) | length(EFOID) < 1)
+    stop("incorrect input")
+  
+  q1 = paste0("SELECT * from efo_entailed_edges where Object IN ('",
+              paste(EFOID, collapse = "','"),
+              "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  av = ans$Subject
+  names(av) = ans$Object
+  return(av)
+}
+
+#' A function to query the efo_labels table and return the term labels for the input EFO IDs
+#' @description
+#' This function provides an interface to the SQL database containing EFO entailed edges. 
+#' @param EFOID a character vector of the EFO CURIE symbols
+#' @details The function returns the set of descendents for the input terms.
+#' @examples
+#' EFOlabels(c("EFO:0000768", "MONDO:0002429"))
+#' @export
+EFOlabels = function (EFOID) 
+{
+    if (!is.character(EFOID) | length(EFOID) < 1) 
+        stop("incorrect input")
+    q1 = paste0("SELECT * from efo_labels where Subject IN ('", 
+        paste(EFOID, collapse = "','"), "')")
+    ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+    av = ans$Object
+    names(av) = ans$Subject
+    return(av)
+}
+
