@@ -29,3 +29,34 @@
 #' ht2 <- search_features(efo_tc, query = "infectious* AND pancrea*")
 #' summary(ht2)
 "efo_tc"
+
+#' A tCorpus object built using GWAS Catalog Studies.
+#' @docType data
+#' @format a tCorpus R6 object where documents are GWAS Catalog studies, suitable for searching
+#' @seealso [efo_tc], [corpustools::tCorpus()]
+#' @source The data are created from `gwc_tc`
+#' @references GWAS catalog: https://www.ebi.ac.uk/gwas/
+#' @examples
+#' gwc_tc
+#' htg <- search_features(gwc_tc, query = "leuk*")
+#' summary(htg)
+"gwc_tc"
+
+
+#' 
+#' A data frame containing the GWAS catalog studies and EFO mappings
+#' @docType data
+#' @format A data frame with observations on
+#' \describe{
+#'    \item{\code{STUDY.ACCESSION}}{The GWAS Catalog ID.}
+#'    \item{\code{DISEASE.TRAIT}}{The text description for the trait being studied.}
+#'    \item{\code{MAPPED_TRAIT}}{The text description of EFO term mapped to that trait.}
+#'    \item{\code{MAPPED_TRAIT_URI}}{The URI for the mapped EFO term.}
+#'    \item{\samp{MAPPED_TRAIT_CURIE}}{The CURIE for the mapped EFO term.}
+#' }
+#' @note We use mappings from study defined traits to EFO as provided by the GWAS Catalog
+#' @source EFO: https://www.ebi.ac.uk/efo/
+#' @keywords datasets
+#' @export
+"gwc_df" 
+
