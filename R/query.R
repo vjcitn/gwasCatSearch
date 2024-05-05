@@ -1,5 +1,5 @@
 ## define the globals
- globalVariables(c("efo", "efo_df", "efo_tc", "mlogp"))
+ globalVariables(c("efo", "efo_df", "efo_tc", "gwc_df", "mlogp"))
 
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
@@ -53,6 +53,56 @@
   return(efo_tc)
 }
 
+##make a searchable corpus based on the GWAS catalog entries
+##there are repeated STUDY.ACCESSION values because we have unrolled
+##the EFO labels
+.makeGWCcorpus = function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE) {
+  gwc_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
+  ##get the CURIEs mapped to each study
+  studyCuries = split(gwc_df$MAPPED_TRAIT_CURIE, gwc_df$STUDY.ACCESSION)
+  
+  ## Synonyms = efo_synonyms is very large - many ontologies
+  efo_syn <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_synonyms")
+  efo_syn = efo_syn[efo_syn$Subject %in% gwc_df$MAPPED_TRAIT_CURIE,]
+  ##unroll this and then paste together all synonyms - use punctuation as a separator since
+  ##it should get ignored by corpus tools
+  sp1 = split(efo_syn[,2], efo_syn[,1], drop=TRUE)
+  ##collapse terms into a single value
+  sp3 = sapply(sp1, function(x) paste(x, collapse=" *:* "))
+  ##add in all the other CURIEs with no synonyms - as the empty string
+  extras = setdiff(gwc_df$MAPPED_TRAIT_CURIE, names(sp3))
+  nv = as.vector(mode="list", rep("", length(extras)))
+  names(nv) = extras
+  sp3 = c(sp3, nv)
+  synperstudy = sapply(studyCuries, 
+                       function(x)
+                         sapply(sp3[x], function(y) paste(y, collapse=" *::* "))
+  )
+  mtraitperstudy = sapply(studyCuries,
+                          function(x) paste(efo_df[x, "Object"], collapse=" *:* "))
+ ##Build up a set of matched traits
+  ##split them by the CURIE they map to
+  xx = unique(gwc_df[,c(1,2)])
+  row.names(xx) = xx[,1]
+  mm = match(names(synperstudy), row.names(xx))
+  xx$Synonyms = ""
+  xx$Synonyms[mm] = synperstudy
+  xx$Trait = ""
+  mm = match(names(mtraitperstudy), row.names(xx))
+  xx$Trait[mm] = mtraitperstudy
+  
+  gwc_tc <- corpustools::create_tcorpus(xx, doc_column = "STUDY.ACCESSION", 
+                                        text_columns = c("DISEASE.TRAIT", "Synonyms", "Trait"),
+                                        remember_spaces=TRUE, split_sentences=TRUE)
+  gwc_tc$preprocess(use_stemming = use_stemming, remove_stopwords = remove_stop_words)
+  
+  if (save) {
+    save(gwc_tc, file = paste0(path, "/gwc_tc.rda"), compress = "xz")
+    #save(gwc_df, file = paste0(path, "/gwc_df.rda"), compress = "xz")
+  }
+  return(gwc_tc)
+}
+ 
 ##stash a few commands to get data in R
 ## gwascatmeta = RSQLite::dbGetQuery(gwasCatSearch:::gwasCatSearch_dbconn(), 
 ##                 "SELECT * from gwascatalog_metadata")
@@ -93,13 +143,14 @@ getSynonyms = function(Ontonames) {
 #' @author Robert Gentleman
 #' @examples 
 #' getMatchedTraits(c("EFO:0000094", "EFO:0000095"))
+#' ckdMatches = getMatchedTraits("EFO:0003884")
 #' @export
 getMatchedTraits = function(Ontonames) {
   if( !is.character(Ontonames) || (length(Ontonames)<1) )
     stop("incorrect input")
-  query = dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from gwascatalog_mappings")
-  sp1 = split(query$DISEASE.TRAIT , query$MAPPED_TRAIT_CURIE)
-  ans = sp1[Ontonames]
+  query = paste0("SELECT * from gwascatalog_mappings WHERE MAPPED_TRAIT_CURIE IN ('", paste(Ontonames, collapse="','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), query)
+  ans = split(ans$DISEASE.TRAIT , ans$MAPPED_TRAIT_CURIE)
   return(ans) 
 }
 
@@ -326,3 +377,44 @@ EFOlabels = function (EFOID)
     return(av)
 }
 
+
+#' A function to query the gwascatalog_metadata table and return the subset of it that corresponds
+#' to the input PubMed IDs.
+#' @description
+#' This function provides an interface to the SQL database containing the GWAS catalog metadata. 
+#' @param PMID a character vector of the PubMed IDs.
+#' @details The function returns the rows of the metadata table with PubMed IDs matching the input.
+#' @examples
+#' pmdf = PubMed2GWASCAT(c("34662886"))
+#' dim(pmdf)
+#' @export
+PubMed2GWASCAT = function(PMID)
+{
+  if( !is.character(PMID) | length(PMID) < 1 )
+    stop("incorrect input")
+  q1 = paste0("SELECT * from gwascatalog_metadata where PUBMEDID IN ('",
+              paste(PMID, collapse = "','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  return(ans)
+}
+
+#' A function to query the gwascatalog_metadata table and return the set of PubMed IDs
+#' that correspond to the input set of GWAS catalog Study Accession numbers.
+#' @description
+#' This function provides an interface to the SQL database containing the GWAS catalog metadata. Note that
+#' one PubMed ID can give rise to many thousand GWAS catalog studies.
+#' @param GWCATID a character vector of the GWAS catalog Study Accession numbers.
+#' @details The function returns a vector PubMed IDs matching the input.
+#' @examples
+#' gwid = GWCATID2PMID(c("GCST010478"))
+#' length(gwid)
+#' @export
+GWCATID2PMID = function(GWCATID)
+{  if( !is.character(GWCATID) | length(GWCATID) < 1 )
+  stop("incorrect input")
+  
+  q1 = paste0("SELECT PUBMEDID from gwascatalog_metadata where `STUDY.ACCESSION` IN ('",
+              paste(GWCATID, collapse = "','"), "')")
+  ans = dbGetQuery(gwasCatSearch_dbconn(), q1)
+  return(ans[[1]])
+  }
