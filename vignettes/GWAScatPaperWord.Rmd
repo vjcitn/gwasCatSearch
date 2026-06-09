@@ -1,6 +1,6 @@
 ---
 title: "Semantic computing for human phenotypes"
-author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael Goncalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
+author: ' Robert Gentleman^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Rafael S. Gonçalves^[Center for Computational Biomedicine, Harvard Medical School, 25 Shattuck St, Boston, MA 02115, USA], Vincent Carey^[Channing Division of Network Medicine, 181 Longwood Ave Boston, MA 02115, USA]'
 date: "2024-05-28"
 output:
     bookdown::word_document2: default
@@ -40,7 +40,7 @@ tasks, but the use of ontologies
 also suffers from a lack of definiteness.
 In this study we explore how natural language
 characterization of human diseases coupled with
-ontologic mapping of study outcome terminology
+ontological mapping of study outcome terminology
 can be used to integrate information from multiple
 studies of genetic origins of disease risk.
 Open source tools and workflows are presented.  This
@@ -62,7 +62,7 @@ To facilitate searching for traits we use a search strategy that combines the us
 
 
 In particular we examine the use of corpus search tools, as exemplified in the `corpustools` package,
-[@atteveldtCorpustoolsManagingQuerying2023], to help search the set of traits that are
+[@welbersCorpustoolsManagingQuerying2023], to help search the set of traits that are
 reported on by the GWAS Catalog. Since these investigator defined traits have been hand curated by the
 EBI and mapped to terms in the EFO we also examine how that mapping can be used to aid the analysis and interpretation of the data. Our software is contained in an R package, `gwasCatSearch` [@gentlemanGwasCatSearchPackageSupport2024a], which is open source and freely available.
 
@@ -113,7 +113,7 @@ INCAtools project [@Matentzoglu2022]. These tables include data from the EBI, se
 ### Ontologies
 
 An ontology is a set of concepts and categories that describe a subject area or domain of knowledge that expresses their properties and the relations between them. Ontologies form one of the bases for knowledge engineering and representation and are important in understanding and referencing biomedical entities. One of the challenges that needs to be addressed is the fact that the same concept might usefully appear in different ontologies and users will need tools to help identify similar concepts across ontologies. A second challenge is that to be useful the ontologies must be accessible and typically that means using the web or a database implementation. There are two constructs that help with this, the compact uniform resource identifiers (CURIEs), and the internationalized resource identifiers (IRIs). A CURIE has three parts: a prefix; a delimiter; and a unique local (to the ontology described by the prefix) identifier from the given nomenclature. The CURIE EFO:0005305 which represents the concept *atrioventricular node disease* has a prefix of EFO, a delimiter of a colon (:) and a unique local identifier of 0005305.  The corresponding IRI for that term is http://www.ebi.ac.uk/efo/EFO_0005305, which gives a web location that can be examined by a user. Note that the delimiter in the IRI is an underscore, rather than a colon. We will use both in our discussion. The terms in the EFO ontology
-are related to each other via semantic relationships,  which can be viewed as a directed acyclic graph. By construction there is a single root node. More specific terms, such as the relationship between cancer and pancreatic cancer are encoded with pancreatic cancer being the **child** of cancer, while cancer is the **parent** of pancreatic cancer.  The descriptions can become more refined, and we define the **descendants** of a node to be the set of child nodes, where one recurses down to the point where a node has no children.  Such a node is referred to as a **leaf**. Studies that map to leaf nodes in the ontology are describing quite specific concepts, while studies that map to non-leaf nodes address concepts that are more general.  Similarly we define **ancestors** to be those nodes obtained by recursing the parent operation applied recursively up to the root node of the ontology.  
+are related to each other via semantic relationships,  which can be viewed as a directed acyclic graph. By construction there is a single root node. More specific terms, such as the relationship between *cancer* and *pancreatic cancer* are encoded with *pancreatic cancer* being the **child** of *cancer*, while *cancer* is the **parent** of *pancreatic cancer*.  The descriptions can become more refined, and we define the **descendants** of a node to be the set of child nodes, where one recurses down to the point where a node has no children.  Such a node is referred to as a **leaf**. Studies that map to leaf nodes in the ontology are describing quite specific concepts, while studies that map to non-leaf nodes address concepts that are more general.  Similarly we define **ancestors** to be those nodes obtained by recursing the parent operation applied recursively up to the root node of the ontology.  
 
 Our discussion of ontologies focuses on term collections that employ
 `is-a`, `part-of`, and `has-disease-location` 
@@ -159,7 +159,7 @@ To facilitate searching we create a dataframe based on the GWAS Catalog studies 
 There are `r length(unique(gwc_df$STUDY.ACCESSION))` studies reported.  Each study can be mapped to one or more EFO terms. We counted the number of EFO terms each study was mapped to and report those in Table \@ref(tab:cmpTableofMappingCounts). The counts range from 1 to `r max(pp)` with the study `r names(pp)[which.max(pp)]` having the most and the vast majority of GWAS Catalog studies are mapped to only one EFO term.  
 
 
-We also provide a dataframe representing the EFO terms, with one row for each term in the EFO ontology and columns labeled `Subject`: the corresponding EFO CURIE; `Object`: the textual description of the trait; `IRI`: the IRI for that term; `DiseaseLocation`: the UBERON CURIE for the location of the `trait` if there is one; `Direct`: the number of GWAS Catalog studies that were mapped directly to that trait; `Inherited`: the number of traits that were mapped to terms that are more specific (according to the ontology) than the `Object`.
+We also provide a dataframe representing the EFO terms, with one row for each term in the EFO ontology and columns labeled `Subject`: the corresponding EFO CURIE; `Object`: the textual description of the trait; `IRI`: the IRI for that term; `DiseaseLocation`: the UBERON CURIE for the location of the `trait` if there is one; `Direct`: the number of GWAS Catalog studies that were mapped directly to that trait; `Inherited`: the number of traits that were mapped to terms that are more specific (according to the ontology) than the `Subject` term.
 
 The contents of the two dataframes are summarized in Tables \@ref(tab:tab1a) and \@ref(tab:tab1b). For the EFO data there are two columns that were not included in the summary table, `Direct` which contains the count of GWAS studies that were directly mapped to that trait and `Inherited` which is the count of GWAS studies that are inherited from children of the EFO term.  
 
@@ -330,7 +330,7 @@ kable_styling(kbl(t(GWCexp1), align='lc', caption="Some attributes of Study GCST
 
 ```
 
-To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. Relationships within the ontology are not used. The corpus can be searched and studies that match the search term retrieved. 
+To create this searchable corpus we made documents, one for each GWAS study, by assembling the GWAS trait (DISEASE.TRAIT), the EFO mapped trait (Trait) and all EFO provided synonyms (Synonyms). In this case the ontology is being used to provide a standardized trait name and its synonyms. Logical relationships in the ontology are not used. The corpus can be searched and studies that match the search term retrieved. 
 In Table \@ref(tab:GWCexp1) we show the metadata associated with the study GCST90083943 as well as the synonyms for `r EFO1`. The entry in our corpus would consist of the text strings associated with the entries DISEASE.TRAIT, MAPPED.TRAIT and EFOSynonyms in that table.
 
 ```{r exgwctc, echo=FALSE, warning=FALSE, message=FALSE}
@@ -432,7 +432,7 @@ disease, and then try to find all GWAS studies that report on that class of
 diseases. First we identify the node in the EFO ontology that
 corresponds to *infectious disease*, which has CURIE EFO:0005741. All infectious diseases should be
 annotated in the EFO as descendants of that EFO term. Currently there are `r length(z2)` descendants and a total of `r efo_df[gg, "Direct"] + efo_df[gg, "Inherited"]` GWAS studies annotated at EFO:0005741 or one of its descendants. We find
-that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited.  From Table \@ref(tab:tryChildren) we see that there were `r directEFO[1]` EFO terms that had no studies mapping to them. We note that the EFO term with over 200 studies mapped to is is `r efo_id[which.max(efo_id$Direct),"Object"]`,
+that `r efo_df[gg,"Direct"]` were directly mapped to EFO:0005741 while `r efo_df[gg,"Inherited"]` where inherited.  From Table \@ref(tab:tryChildren) we see that there were `r directEFO[1]` EFO terms that had no studies mapped to them. We note that the EFO term with over 200 studies mapped to is is `r efo_id[which.max(efo_id$Direct),"Object"]`,
 
 #### Strategy Two: Search based on the GWAS Catalog corpus
 
@@ -472,7 +472,7 @@ check1 = EFOancestors(vvGWC[1, "MAPPED_TRAIT_CURIE"])
 
 The second approach found `r length(vv)` studies that were not found by our first approach,
 while the first approach found `r length(v2)` studies that were not found by the second.
-One of the studies found by second approach that was not found using the first was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Examining the list of those found by our first method but not by our second we see that these are mainly infectious diseases where the token *infect* is not found in the name of the disease or any of its synonyms.
+One of the studies found by the second approach that was not found using the first was `r vv[1]` which has the disease trait `r vvGWC[1, "DISEASE.TRAIT"]`. And the associated EFO term is `r vvGWC[1, "MAPPED_TRAIT_CURIE"]` and while it is not an infectious disease one of its synonyms is "pseudomonas aeruginosa, susceptibility to chronic infection by, in cystic fibrosis", which explains why it was found using our second method.  Examining the list of those found by our first method but not by our second we see that these are mainly infectious diseases where the token *infect* is not found in the name of the disease or any of its synonyms.
 
 #### Strategy three: Use the EFO corpus to get specific disease names
 
@@ -497,7 +497,7 @@ setd3 = setdiff(efoIDS3, row.names(efo_id))
 ```
 
 Above we first started by searching for *infectious disease* in the EFO ontology and then found
-all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS Catalog studies for the terms infectious and disease.  A third approach is to use the EFO corpus to provide specific disease names, from the term labels for those EFO terms listed under the infectious disease node, EFO:0005741. If we simply extract all the EFO term labels for the descendants of EFO:0005741 and search the corpus with those we find `r nrow(hixx)` studies, which is an increase over using the first strategy that relied on the direct and inherited studes reported for EFO:0005741. We could enhance thid search further in a number of ways such as using all synonyms, or breaking down terms into individual words and searching.  However these processes can become unwieldy. 
+all GWAS studies that mapped directly to either that node, or one of its descendants. We contrasted that with the strategy of searching the corpus based on the GWAS Catalog studies for the terms infectious and disease.  A third approach is to use the EFO corpus to provide specific disease names, from the term labels for those EFO terms listed under the infectious disease node, EFO:0005741. If we simply extract all the EFO term labels for the descendants of EFO:0005741 and search the corpus with those we find `r nrow(hixx)` studies, which is an increase over using the first strategy that relied on the direct and inherited studes reported for EFO:0005741. We could enhance this search further in a number of ways such as using all synonyms, or breaking down terms into individual words and searching.  However these processes can become unwieldy. 
 
 ```{r getresources, eval=FALSE, echo=FALSE}
 
