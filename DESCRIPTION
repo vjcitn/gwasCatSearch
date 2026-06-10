@@ -1,7 +1,7 @@
 Package: gwasCatSearch
 Type: Package
 Title: A package to support ontological search of the GWAS Catalog
-Version: 0.2.18
+Version: 0.2.19
 Authors@R:
     c(person(given = "Robert",
            family = "Gentleman",
@@ -24,5 +24,5 @@ LazyData: true
 LazyDataCompression: xz
 NeedsCompilation: no
 Packaged: 2023-05-27 16:28:30 UTC; robert
-RoxygenNote: 7.2.3
 Roxygen: list(markdown=TRUE)
+Config/roxygen2/version: 8.0.0

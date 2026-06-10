@@ -11,7 +11,7 @@ query2table = function(query="(kidney AND disease)") {
   data("efo_df", package = "gwasCatSearch")
     sout <- corpustools::search_features(tc = efo_tc, query = query)
     if (nrow(sout$hits) < 1) stop("no hits, please try a different query")
-    gwasCatSearch::hits2DT(sout, efo_df, efo_tc)
+    hits2DT(sout, efo_df, efo_tc)
 }
 
 
@@ -31,7 +31,7 @@ process_annotated = function (query = "(kidney AND disease)",
         sels = seq_len(nrow(tab))
     rn = rn[sels]
     u <- unique(rn)
-    last <- gwasCatSearch::resources_annotated_with_term(u, 
+    last <- resources_annotated_with_term(u, 
         include_subclasses = include_subclasses, 
             direct_subclasses_only = direct_subclasses_only)
     dups <- which(duplicated(last$STUDY.ACCESSION))

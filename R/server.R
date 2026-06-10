@@ -47,12 +47,12 @@ server <- function(input, output, session) {
    isolate({
     sout <- corpustools::search_features(tc = efo_tc, query = input$query)
     validate(need(nrow(sout$hits) > 0, "no hits, please try a different query"))
-    tab <- gwasCatSearch::hits2DT(sout, efo_df, efo_tc)
+    tab <- hits2DT(sout, efo_df, efo_tc)
     tab
     })
   })
   output$hits <- DT::renderDataTable(
-    ntab(),
+    dplyr::arrange(ntab(), desc(Direct)),
     escape = FALSE, rownames=FALSE
   )
 
@@ -62,7 +62,7 @@ server <- function(input, output, session) {
     sels = input$hits_rows_selected
     if (!is.null(sels)) rn = rn[sels]
     u <- unique(rn)
-    last <- gwasCatSearch::resources_annotated_with_term(u,
+    last <- resources_annotated_with_term(u,
       include_subclasses = isTRUE("include subclasses" %in% input$inclsub),
       direct_subclasses_only = isTRUE("direct subclss only" %in% input$inclsub)
     )
@@ -125,7 +125,7 @@ server <- function(input, output, session) {
      dat = grab_resources()
      #d4manh = ggmanh::manhattan_data_preprocess(dat, chr.colname="seqnames",
      #       pos.colname="start", pval.colname="P-VALUE", chr.order=c(1:22, "X", "Y"))
-     gwasCatSearch::simple_ggmanh(dat, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
+     simple_ggmanh(dat, y.label="-log10 p", label.colname = "MAPPED_TRAIT")
      })
   output$snptab <- DT::renderDataTable({
      snpind = input$snps_rows_selected

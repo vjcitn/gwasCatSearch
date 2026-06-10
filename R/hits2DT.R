@@ -47,7 +47,10 @@ hits2DT <- function(hits, efoDF, tc) {
 
   hit_index <- match(unique(hits$hits$doc_id), efoDF$Subject)
   matchedEFO <- efoDF[hit_index, ]
-  EFO <- paste0("<a href= \"", matchedEFO$IRI, "\">", matchedEFO$Subject, "</a>")
+  onto_prefix <- tolower(sub(":.*", "", matchedEFO$Subject))
+  ols4_url <- paste0("https://www.ebi.ac.uk/ols4/ontologies/", onto_prefix,
+                     "/terms?iri=", utils::URLencode(matchedEFO$IRI, reserved = TRUE))
+  EFO <- paste0("<a href= \"", ols4_url, "\">", matchedEFO$Subject, "</a>")
   EFOtext <- matchedEFO$Object
   Direct <- matchedEFO$"Direct"
   Inherited <- matchedEFO$"Inherited"

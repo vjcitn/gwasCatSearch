@@ -1,5 +1,5 @@
 ## define the globals
- globalVariables(c("efo", "efo_df", "efo_tc", "gwc_df", "mlogp"))
+# globalVariables(c("efo", "efo_df", "efo_tc", "gwc_df", "mlogp"))
 
 ## internal helper function used to build the two data resources - this
 ## function needs to be run and the data updated whenever a new database is obtained
@@ -8,9 +8,23 @@
 ## we probably need some testing here for completeness and accuracy
 ## we probably need to figure out if we can drop some of the columns etc - these might be
 ## getting pretty big
-.makeCorpus <- function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE) {
+.makeCorpus <- function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE,
+                        keep_prefix = c("MONDO"),
+                        drop_label_suffix = c("measurement")) {
   efo_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_labels")
   row.names(efo_df) = efo_df$Subject
+  ## Restrict to an allowlist of CURIE prefixes. NULL keeps all prefixes used in GWAS mappings.
+  if (!is.null(keep_prefix)) {
+    efo_df <- efo_df[sub(":.*", "", efo_df$Subject) %in% keep_prefix, ]
+  } else {
+    gwas_prefixes <- unique(sub(":.*", "", gwc_df$MAPPED_TRAIT_CURIE))
+    efo_df <- efo_df[sub(":.*", "", efo_df$Subject) %in% gwas_prefixes, ]
+  }
+  ## Remove terms whose label ends with any drop_label_suffix string. Pass NULL to retain all.
+  if (length(drop_label_suffix) > 0) {
+    pat <- paste0("(", paste(drop_label_suffix, collapse = "|"), ")$")
+    efo_df <- efo_df[!grepl(pat, efo_df$Object, ignore.case = TRUE), ]
+  }
  # gwtrait_df <- dbGetQuery(gwasCatSearch_dbconn(),
  #                         "SELECT \"DISEASE.TRAIT\", MAPPED_TRAIT FROM gwascatalog_metadata")
   
