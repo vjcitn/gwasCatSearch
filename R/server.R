@@ -178,6 +178,34 @@ server <- function(input, output, session) {
       })
     }
   })
+  output$aboutinfo <- renderUI({
+    vi <- getVersionInfo()
+    ver <- as.character(packageVersion("gwasCatSearch"))
+    rows <- apply(vi, 1, function(r)
+      tags$tr(tags$td(strong(r["Resource"])), tags$td(r["Version"]))
+    )
+    tagList(
+      h3(paste("gwasCatSearch", ver)),
+      p("This app provides free-text and ontological search of the ",
+        a("EBI/NHGRI GWAS Catalog", href="https://www.ebi.ac.uk/gwas/", target="_blank"),
+        ". The searchable corpus is restricted to ",
+        a("MONDO", href="https://mondo.monarchinitiative.org/", target="_blank"),
+        " disease ontology terms. Queries use stemming and Boolean logic (AND, OR, *) via the ",
+        a("corpustools", href="https://cran.r-project.org/package=corpustools", target="_blank"),
+        " package. Ontology structure is derived from a ",
+        a("SemanticSQL", href="https://github.com/INCATools/semantic-sql", target="_blank"),
+        " build of EFO. Trait-to-ontology mappings were supplemented using ",
+        a("text2term", href="https://text2term.hms.harvard.edu/", target="_blank"), "."
+      ),
+      h4("Resource versions and access dates"),
+      tags$table(
+        class = "table table-condensed table-bordered",
+        style = "width:auto; max-width:500px;",
+        tags$thead(tags$tr(tags$th("Resource"), tags$th("Version / Date"))),
+        tags$tbody(rows)
+      )
+    )
+  })
   output$packdesc = renderPrint({
     packageDescription("gwasCatSearch")
     })

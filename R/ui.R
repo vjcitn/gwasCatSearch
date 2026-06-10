@@ -47,12 +47,7 @@ uif <- function() {
           tabPanel("snps", helpText("First SNP retrieval can take 20 seconds"), DT::dataTableOutput("snps")),
           tabPanel("manh", plotly::plotlyOutput("snpviz"), 
             helpText("All SNPs in plot:"), DT::dataTableOutput("snptab")),
-          tabPanel("about", helpText("This experimental app is based on a tokenization of phenotype descriptions
-from the EBI/NHGRI GWAS catalog, data obtained in March 2023.  The text2term mapper was applied,
-a corpus was derived using corpustools, and the corpus can be interrogated with regular expression
-and phrase logic.
-
-https://computationalbiomed.hms.harvard.edu/tools-and-technologies/tools-tech-details/text2term-ontology-mapping/"), helpText(" "), verbatimTextOutput("packdesc"),  verbatimTextOutput("sessinf"))
+          tabPanel("about", uiOutput("aboutinfo"), helpText(" "), verbatimTextOutput("packdesc"), verbatimTextOutput("sessinf"))
         )
       )
     )
