@@ -10,7 +10,8 @@
 ## getting pretty big
 .makeCorpus <- function(path = getwd(), use_stemming = TRUE, remove_stop_words = TRUE, save = TRUE,
                         keep_prefix = c("MONDO"),
-                        drop_label_suffix = c("measurement")) {
+                        drop_label_suffix = c("measurement"),
+                        include_gwas_trait_text = FALSE) {
   efo_df <- dbGetQuery(gwasCatSearch_dbconn(), "SELECT * from efo_labels")
   row.names(efo_df) = efo_df$Subject
   ## Restrict to an allowlist of CURIE prefixes. NULL keeps all prefixes used in GWAS mappings.
@@ -54,8 +55,9 @@
   
   ##at some point try setting remember_spaces=TRUE - this should retain the column
   ##where the match occurs - and I am guessing we can filter on that
-  efo_tc <- corpustools::create_tcorpus(efo_df, doc_column = "Subject", 
-                                        text_columns = c("Object", "Synonyms", "Matches"),
+  text_cols <- if (include_gwas_trait_text) c("Object", "Synonyms", "Matches") else c("Object", "Synonyms")
+  efo_tc <- corpustools::create_tcorpus(efo_df, doc_column = "Subject",
+                                        text_columns = text_cols,
                                         remember_spaces=TRUE, split_sentences=TRUE)
   efo_tc$preprocess(use_stemming = use_stemming, remove_stopwords = remove_stop_words)
 
