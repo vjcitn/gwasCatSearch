@@ -30,6 +30,10 @@ make_oi = function (tags)
         sp = sp[-drop]
         sp = sp[names(labs)]
     }
+    ## Remove parent pointers to terms outside the local graph (e.g. owl:Thing,
+    ## BFO:0000016) — onto_plot2 calls which() on the graph and fails on unresolved parents.
+    known <- names(sp)
+    sp <- lapply(sp, function(x) x[x %in% known])
     ontology_index(name = labs, parents = sp)
 }
 
@@ -138,21 +142,15 @@ server <- function(input, output, session) {
     
   output$showbuttons <- renderUI({
     validate(need(input$graphicson == TRUE, "must enable graphics on sidebar"))
-    last <- process_annotated()
-    u <- unique(last$MAPPED_TRAIT_CURIE) # used to eliminate dups, before commas
-#
-# August 30 -- discovered that MAPPED_TRAIT_CURIE can be comma delimited
-#
-    u <- unique(unlist(strsplit(u, ",")))
-#
-# FIXME -- must allow setting of max num tags at UI
-#
+    ## Use the MONDO hit terms from the corpus search (rownames of ntab) rather than
+    ## MAPPED_TRAIT_CURIE from the studies table, which may contain deprecated EFO CURIEs
+    ## absent from the current ontology database.
+    tab <- ntab()
+    u <- unique(rownames(tab))
     su <- u
     if (length(u) >= 15) su <- u[seq_len(15)]
-#
-# there can be NAs in efo$name[u]
-#
     efo = make_oi(u)
+    validate(need(length(efo$name) > 0, "No ontology terms found for selected hits"))
     en = efo$name[u]
     dr = which(is.na(en))
     if (length(dr)>0) {
