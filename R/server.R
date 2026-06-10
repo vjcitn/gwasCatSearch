@@ -83,7 +83,7 @@ server <- function(input, output, session) {
   })
   output$resources <- DT::renderDataTable({
     last <- process_annotated()
-    DT::datatable(last, escape = FALSE,
+    DT::datatable(last, escape = FALSE, filter = 'top',
       extensions = c('Select', 'Buttons'), options = list(
     select = list(style = 'os', items = 'row'),
     dom = 'Blfrtip',
@@ -162,7 +162,7 @@ server <- function(input, output, session) {
     names(u) <- efo$name[u]
     names(su) <- efo$name[su]
 
-    checkboxGroupInput("gbuttons", "ontoterms to show", u, selected = su, inline = TRUE)
+    checkboxGroupInput("gbuttons", "ontoterms to show", u[order(names(u))], selected = su, inline = TRUE)
   })
   output$dlres <- downloadHandler(
     filename = function() {
