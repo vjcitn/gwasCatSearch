@@ -60,6 +60,10 @@ simple_ggmanh <- function(
     x$data <- x$data[x$data[[x$chr.colname]] == chromosome,]
   }
 
+  # ggmanh >= 1.16.0: new_pos_unscaled is within-chromosome [0,1]; add global offset
+  chr_offset <- x$chr.pos.info$start_pos[x$data[[x$chr.colname]]]
+  x$data[[x$pos.colname]] <- x$data[[x$pos.colname]] + ifelse(is.na(chr_offset), 0, chr_offset)
+
   # decide if the resulting plot will be single chromosome, or multiple
   single.chr <- length(unique(x$data[[x$chr.colname]])) == 1
 
