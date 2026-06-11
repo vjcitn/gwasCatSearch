@@ -15,10 +15,10 @@ License: CC BY 4.0 | file LICENSE
 VignetteBuilder: knitr
 Depends: corpustools, R (>= 3.5.0)
 Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
-	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges, 
-	ontologyIndex, dplyr, ggmanh, rlang
+	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges,
+	ontologyIndex, dplyr, rlang
 Suggests: knitr, rmarkdown, testthat, gwasrapidd, bookdown, kableExtra,
-	lubridate
+	lubridate, ggmanh
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz

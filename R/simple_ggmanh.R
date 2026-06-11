@@ -1,6 +1,5 @@
 
 #' produce plotly-capable manhattanplot based on ggmanh
-#' @import ggmanh
 #' @import rlang
 #' @param indf data.frame as produced by `variants_from_study`
 #' @param pos.colname character(1) defaults to "CHR_POS"
@@ -32,13 +31,15 @@
 #' plotly::ggplotly(ww, tooltip="text")
 #' @export
 simple_ggmanh <- function(
-  indf, pos.colname="CHR_POS", chr.colname = "CHR_ID", chromosome = NULL, 
-  rescale = TRUE, 
+  indf, pos.colname="CHR_POS", chr.colname = "CHR_ID", chromosome = NULL,
+  rescale = TRUE,
   rescale.ratio.threshold = 5, signif.rel.pos = 0.4, color.by.highlight = FALSE,
   label.colname = NULL, pval.colname="P-VALUE", x.label = "Chromosome", y.label = "-log10 p",
   point.size = 0.75, label.font.size = 2, max.overlaps = 20,
   plot.title = ggplot2::waiver(), plot.subtitle = ggplot2::waiver(),
   plot.width = 10, plot.height = 5) {
+  if (!requireNamespace("ggmanh", quietly = TRUE))
+    stop("Package 'ggmanh' is required for Manhattan plots. Install with BiocManager::install('ggmanh').")
 #
 # this code is extracted from ggmanh:::manhattan_plot.MPdata, to support
 # use of ggplotly with the output.  it excludes the ggrepel capability
