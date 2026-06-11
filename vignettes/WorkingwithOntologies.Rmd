@@ -33,77 +33,65 @@ The ontology index contains information about children, parents and ancestors fo
 ```
 
 ```{r , echo=TRUE}
-EFOlabels("EFO:0000095")
-EFOchildren("EFO:0000095")
-EFOparents("EFO:0000095")
+EFOlabels("MONDO:0003864")
+EFOchildren("MONDO:0003864")
+EFOparents("MONDO:0003864")
 ```
 
 We'll produce a "little" ontology_index instance for illustration.
 
 ```{r dolit}
-litoi = make_oi("EFO:0000095") 
+litoi = make_oi("MONDO:0003864")
 litoi
 ```
 
-One of the parents of `EFO:0000095` is `EFO:0000220` and we can see how many children it has by using the `children` table in the ontology index.
+One of the parents of `MONDO:0003864` is `MONDO:0004948` (B-cell chronic lymphocytic leukemia) and we can see how many children it has by using the `children` table in the ontology index.
 
 ```{r chk}
-litoi$children["EFO:0000095"]
+litoi$children["MONDO:0003864"]
 ```
 
-If we use the `[[` accessor then we just get the vector of children. If instead we use the `[` accessor then we would get a list that is named by the input vector of terms where each element is the vector of children for the corresponding EFO term.
+If we use the `[[` accessor then we just get the vector of children. If instead we use the `[` accessor then we would get a list that is named by the input vector of terms where each element is the vector of children for the corresponding term.
 
 ```{r}
-x1 = litoi$children[["EFO:0000220"]]
-
+x1 = litoi$children[["MONDO:0004948"]]
 x1
 ```
 
-We see that "EFO:0000095" is one of the children of "EFO:0000220", as we expect given the fact that "EFO:0000220" is a parent of "EFO:0000095"
+We see that `MONDO:0003864` is one of the children of `MONDO:0004948`, as we expect given the fact that `MONDO:0004948` is a parent of `MONDO:0003864`.
 
-Now we will interact with the DB to get at the mappings to different terms. In the code below we can find which of the children of "EFO:0000220" have studies that are directly mapped to them or that have inherited a mapping from. one of its children.
+Now we will interact with the DB to get at the mappings to different terms. In the code below we can find which of the children of `MONDO:0004948` have studies that are directly mapped to them or that have inherited a mapping from one of its children.
 
 ```{r dbmappings}
-
- query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
-                paste(x1, collapse = "','"),
-                "')")
- mappedans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
- mappedans$Direct
- mappedans$Inherited
-
+query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
+               paste(x1, collapse = "','"),
+               "')")
+mappedans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
+mappedans$Direct
+mappedans$Inherited
 ```
 
-In the code chunk below we get the counts for the parents of "EFO:0000095". Suppose we are interested in this phenotype and interpreting the GWAS hits. One approach we could take to interpreting any GWAS hits for this phenotype is to download GWAS summary statistics for this phenotype (if it was computed) from the UKBB. We could then do either a Manhattan plot of those summary statistics in a local neighborhood, or we could do a compressed view that covered all chromosomes.
+In the code chunk below we get the counts for the parents of `MONDO:0003864`. Suppose we are interested in this phenotype and interpreting the GWAS hits. One approach we could take to interpreting any GWAS hits for this phenotype is to download GWAS summary statistics for this phenotype (if it was computed) from the UKBB. We could then do either a Manhattan plot of those summary statistics in a local neighborhood, or we could do a compressed view that covered all chromosomes.
 
-We might also wonder if there are GWAS hits for related phenotypes that are in similar locations in the genome. For example, since this phenotype is "chronic lymphocytic leukemia" we might ask if we look at all the hits mapped to the leukemia node in our ontology would they show any shared location.
+We might also wonder if there are GWAS hits for related phenotypes that are in similar locations in the genome. For example, since this phenotype is "chronic lymphocytic leukemia/small lymphocytic lymphoma" we might ask if we look at all the hits mapped to the leukemia node in our ontology would they show any shared location.
 
 Our goal is to find a set of GWAS phenotypes that
 
-```{r parentmappings, eval=FALSE}
+```{r parentmappings}
 query = paste0("SELECT * FROM efo_labels WHERE Subject IN ('",
-                paste(litoi$parents[["EFO:0000095"]], collapse = "','"),
-                "')")
- pans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
- pans$Direct
- pans$Inherited
+               paste(litoi$parents[["MONDO:0003864"]], collapse = "','"),
+               "')")
+pans = DBI::dbGetQuery(gwasCatSearch_dbconn(), query)
+pans$Direct
+pans$Inherited
 ```
 
-Now we can look at some plotting for the graph and manipulations of the EFO tables.
+Now we can look at some plotting for the graph and manipulations of the ontology.
 
 ```{r graphPlot, eval=FALSE}
-#tags = c("EFO:0003884", "EFO:0004531", "EFO:0005208", "EFO:0009909", "EFO:0021409", #"EFO:0021433")
-##assign the next one to get back the graph structure that is plotted
-#get "EFO:0000095" and
-tags = c(x1, "EFO:0000095")
-##plotTags seems to cause some big download
-xt = plotTags(tags) ## could use make_oi and onto_plot2
-nn = graph::nodes(xt)
-##nodes have long names - suitable for printing we just want the CURIEs
-v1 = strsplit(nn, "\n")
-nodeEFO = sapply(v1, function(x) x[length(x)])
-subs=efo_df[nodeEFO,c("Direct","Inherited")]
-subs
+tags = c(x1, "MONDO:0003864")
+xt = make_oi(tags)
+ontoProc::onto_plot2(xt, tags)
 ```
 
 Some semantic network code

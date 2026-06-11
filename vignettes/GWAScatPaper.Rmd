@@ -8,18 +8,13 @@ output:
     number_sections: false
     extra_dependencies: ["longtable", "float"]
 
-vignette: >
-  %\VignetteIndexEntry{Semantic computing for human phenotypes}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-
 bibliography: references.bib
 
 format: html
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 library("gwasCatSearch")
 library("kableExtra")
 library("DT")

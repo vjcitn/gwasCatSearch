@@ -7,11 +7,6 @@ output:
     number_sections: false
     toc: false
 
-vignette: >
-  %\VignetteIndexEntry{Semantic computing for human phenotypes}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
-
 bibliography: references.bib
 csl: oxford-university-press-scimed-author-date.csl
 
@@ -21,7 +16,7 @@ format: html
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 library("gwasCatSearch")
 library("kableExtra")
 library("DT")
