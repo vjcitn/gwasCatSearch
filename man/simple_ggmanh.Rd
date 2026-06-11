@@ -2,28 +2,18 @@
 % Please edit documentation in R/simple_ggmanh.R
 \name{simple_ggmanh}
 \alias{simple_ggmanh}
-\title{produce plotly-capable manhattanplot based on ggmanh}
+\title{produce plotly-capable Manhattan plot using ggplot2}
 \usage{
 simple_ggmanh(
   indf,
   pos.colname = "CHR_POS",
   chr.colname = "CHR_ID",
-  chromosome = NULL,
-  rescale = TRUE,
-  rescale.ratio.threshold = 5,
-  signif.rel.pos = 0.4,
-  color.by.highlight = FALSE,
-  label.colname = NULL,
   pval.colname = "P-VALUE",
+  label.colname = NULL,
   x.label = "Chromosome",
   y.label = "-log10 p",
   point.size = 0.75,
-  label.font.size = 2,
-  max.overlaps = 20,
-  plot.title = ggplot2::waiver(),
-  plot.subtitle = ggplot2::waiver(),
-  plot.width = 10,
-  plot.height = 5
+  signif = 5e-08
 )
 }
 \arguments{
@@ -33,50 +23,31 @@ simple_ggmanh(
 
 \item{chr.colname}{character(1) defaults to "CHR_ID"}
 
-\item{chromosome}{character(1) or NULL, should be removed for gwasCatSearch}
+\item{pval.colname}{character(1) defaults to "P-VALUE"}
 
-\item{rescale}{logical(1)}
+\item{label.colname}{character(1) column used for hover tooltip labeling}
 
-\item{rescale.ratio.threshold}{numeric(1)}
+\item{x.label}{character(1) x-axis label}
 
-\item{signif.rel.pos}{numeric(1)}
+\item{y.label}{character(1) y-axis label}
 
-\item{color.by.highlight}{logical(1)}
+\item{point.size}{numeric(1) point size passed to geom_point}
 
-\item{label.colname}{character(1) obligatory for phenotype labeling}
-
-\item{pval.colname}{character(1)}
-
-\item{x.label}{character(1)}
-
-\item{y.label}{character(1)}
-
-\item{point.size}{numeric(1)}
-
-\item{label.font.size}{numeric(1)}
-
-\item{max.overlaps}{numeric(1)}
-
-\item{plot.title}{like ggplot2::waiver() or character(1)}
-
-\item{plot.subtitle}{like plot.title}
-
-\item{plot.width}{numeric(1)}
-
-\item{plot.height}{numeric(1)}
+\item{signif}{numeric(1) genome-wide significance threshold, default 5e-8}
 }
 \description{
-produce plotly-capable manhattanplot based on ggmanh
+produce plotly-capable Manhattan plot using ggplot2
 }
 \note{
-Association records with missing p-values are eliminated before
-plotting.  Note also that the position column in \code{indf} is coerced to numeric mode.
+Association records with missing p-values or positions are dropped before
+plotting. The position column is coerced to numeric. No external Manhattan
+plot package is required.
 }
 \examples{
 con = gwasCatSearch_dbconn()
-toprecs = DBI::dbGetQuery(con, "select * from gwascatalog_associations limit 20")
+toprecs = DBI::dbGetQuery(con, "select * from gwascatalog_associations limit 200")
 toprecs$CHR_POS = as.numeric(toprecs$CHR_POS)
-ww = simple_ggmanh(toprecs, y.label="-log10 p", 
+ww = simple_ggmanh(toprecs, y.label="-log10 p",
        label.colname = "MAPPED_TRAIT", pval.colname="P-VALUE")
 plotly::ggplotly(ww, tooltip="text")
 }

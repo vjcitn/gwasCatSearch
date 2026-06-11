@@ -18,7 +18,7 @@ Imports: methods, RSQLite, shinyjs, DBI, utils, DT, shiny, ontoProc,
 	ggplot2, plotly, GenomicRanges, S4Vectors, IRanges,
 	ontologyIndex, dplyr, rlang
 Suggests: knitr, rmarkdown, testthat, gwasrapidd, bookdown, kableExtra,
-	lubridate, ggmanh
+	lubridate
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
